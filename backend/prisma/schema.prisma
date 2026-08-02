@@ -1,0 +1,367 @@
+// Prisma schema for Sistem Informasi Dojang Hapkido (Multi-Dojang Architecture)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String      @id @default(uuid())
+  username     String      @unique
+  passwordHash String
+  name         String
+  role         String      @default("ADMIN") // ADMIN, PELATIH
+  phone        String?
+  email        String?
+  avatarUrl    String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  trainer      Trainer?
+  auditLogs    AuditLog[]
+}
+
+model Dojang {
+  id              String             @id @default(uuid())
+  code            String             @unique // e.g. JKT, BDG, SBY
+  name            String             // e.g. Dojang Hapkido Pusat Jakarta
+  address         String?
+  phone           String?
+  email           String?
+  headTrainerName String?
+  status          String             @default("AKTIF") // AKTIF, NONAKTIF
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  members         Member[]
+  trainers        Trainer[]
+  schedules       TrainingSchedule[]
+  payments        Payment[]
+  expenses        Expense[]
+  inventories     Inventory[]
+}
+
+model Member {
+  id               String               @id @default(uuid())
+  nia              String               @unique // Nomor Induk Anggota (Format: HKD-[CODE]-YYYY-XXX)
+  dojangId         String?
+  dojang           Dojang?              @relation(fields: [dojangId], references: [id], onDelete: SetNull)
+  fullName         String
+  nickname         String?
+  gender           String               // LAKILAKI, PEREMPUAN
+  birthPlace       String?
+  birthDate        DateTime?
+  phone            String?
+  email            String?
+  address          String?
+  photoUrl         String?
+  status           String               @default("AKTIF") // AKTIF, NONAKTIF
+  parentName       String?
+  parentPhone      String?
+  parentJob        String?
+  emergencyContact String?
+  currentBeltId    String?
+  joinedAt         DateTime             @default(now())
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  
+  beltHistory      MemberBeltHistory[]
+  examResults      BeltExamResult[]
+  attendance       AttendanceRecord[]
+  payments         Payment[]
+  eventRegs        EventRegistration[]
+  certificates     Certificate[]
+}
+
+model Trainer {
+  id           String             @id @default(uuid())
+  userId       String             @unique
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dojangId     String?
+  dojang       Dojang?            @relation(fields: [dojangId], references: [id], onDelete: SetNull)
+  specialty    String?
+  bio          String?
+  isHead       Boolean            @default(false)
+  status       String             @default("AKTIF") // AKTIF, NONAKTIF
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  
+  classes      TrainingClass[]
+  schedules    TrainingSchedule[]
+}
+
+model BeltLevel {
+  id              String              @id @default(uuid())
+  name            String              // e.g. Sabuk Putih (Geup 10), Sabuk Kuning (Geup 9), etc.
+  geupRank        Int                 // 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 (Dan 1)
+  badgeColor      String              // Hex or Tailwind color class
+  description     String?
+  requirements    String?             // Syarat teknik & kurikulum
+  examFeeDefault  Float               @default(0)
+  createdAt       DateTime            @default(now())
+  
+  memberBelts     MemberBeltHistory[]
+  targetResults   BeltExamResult[]
+}
+
+model MemberBeltHistory {
+  id            String    @id @default(uuid())
+  memberId      String
+  member        Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  beltLevelId   String
+  beltLevel     BeltLevel @relation(fields: [beltLevelId], references: [id])
+  examDate      DateTime  @default(now())
+  certificateNo String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+}
+
+model BeltExam {
+  id          String           @id @default(uuid())
+  title       String
+  date        DateTime
+  location    String
+  examiner    String?
+  feeAmount   Float            @default(0)
+  status      String           @default("JADWAL") // JADWAL, SELESAI, BATAL
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  
+  results     BeltExamResult[]
+}
+
+model BeltExamResult {
+  id            String    @id @default(uuid())
+  beltExamId    String
+  beltExam      BeltExam  @relation(fields: [beltExamId], references: [id], onDelete: Cascade)
+  memberId      String
+  member        Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  targetBeltId  String
+  targetBelt    BeltLevel @relation(fields: [targetBeltId], references: [id])
+  score         Float?
+  result        String    @default("MENUNGGU") // LULUS, TIDAK_LULUS, MENUNGGU
+  certificateNo String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+}
+
+model TrainingClass {
+  id            String             @id @default(uuid())
+  name          String
+  levelCategory String?            // REGULER, PRESTASI, PRIVAT
+  trainerId     String?
+  trainer       Trainer?           @relation(fields: [trainerId], references: [id], onDelete: SetNull)
+  dayOfWeek     String             // SENIN, SELASA, RABU, KAMIS, JUMAT, SABTU, MINGGU
+  startTime     String             // HH:mm
+  endTime       String             // HH:mm
+  location      String
+  description   String?
+  status        String             @default("AKTIF")
+  createdAt     DateTime           @default(now())
+  
+  schedules     TrainingSchedule[]
+}
+
+model TrainingSchedule {
+  id          String              @id @default(uuid())
+  dojangId    String?
+  dojang      Dojang?             @relation(fields: [dojangId], references: [id], onDelete: SetNull)
+  classId     String?
+  class       TrainingClass?      @relation(fields: [classId], references: [id], onDelete: SetNull)
+  trainerId   String?
+  trainer     Trainer?            @relation(fields: [trainerId], references: [id], onDelete: SetNull)
+  dayOfWeek   String              @default("SELASA") // SENIN, SELASA, RABU, KAMIS, JUMAT, SABTU, MINGGU
+  startTime   String              @default("16:00") // HH:mm
+  endTime     String              @default("18:00") // HH:mm
+  title       String
+  location    String
+  status      String              @default("AKTIF") // AKTIF, NONAKTIF
+  notes       String?
+  createdAt   DateTime            @default(now())
+  
+  sessions    AttendanceSession[]
+}
+
+model AttendanceSession {
+  id          String             @id @default(uuid())
+  scheduleId  String
+  schedule    TrainingSchedule   @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  date        DateTime           @default(now())
+  qrCodeToken String             @default(uuid())
+  status      String             @default("OPEN") // OPEN, CLOSED
+  openedById  String?
+  createdAt   DateTime           @default(now())
+  
+  records     AttendanceRecord[]
+}
+
+model AttendanceRecord {
+  id          String            @id @default(uuid())
+  sessionId   String
+  session     AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  memberId    String
+  member      Member            @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  status      String            @default("HADIR") // HADIR, TERLAMBAT, IZIN, SAKIT, ALPHA
+  checkInTime DateTime          @default(now())
+  notes       String?
+  recordedBy  String?
+}
+
+model DuesType {
+  id            String    @id @default(uuid())
+  name          String
+  category      String    @default("BULANAN") // BULANAN, TAHUNAN, UJIAN_SABUK, EVENT, LAINNYA
+  defaultAmount Float     @default(0)
+  description   String?
+  createdAt     DateTime  @default(now())
+  
+  payments      Payment[]
+}
+
+model Payment {
+  id            String    @id @default(uuid())
+  invoiceNo     String    @unique
+  dojangId      String?
+  dojang        Dojang?   @relation(fields: [dojangId], references: [id], onDelete: SetNull)
+  memberId      String
+  member        Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  duesTypeId    String?
+  duesType      DuesType? @relation(fields: [duesTypeId], references: [id], onDelete: SetNull)
+  amount        Float
+  paidAmount    Float     @default(0)
+  paymentDate   DateTime  @default(now())
+  dueDate       DateTime?
+  paymentMethod String    @default("TUNAI") // TUNAI, TRANSFER
+  status        String    @default("LUNAS") // LUNAS, SEBAGIAN, BELUM_BAYAR, BATAL
+  proofUrl      String?
+  receiptNo     String?
+  notes         String?
+  createdById   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  dojangId    String?
+  dojang      Dojang?  @relation(fields: [dojangId], references: [id], onDelete: SetNull)
+  title       String
+  category    String   @default("OPERASIONAL") // GAJI_PELATIH, SEWA_TEMPAT, PERALATAN, EVENT, OPERASIONAL
+  amount      Float
+  expenseDate DateTime @default(now())
+  recipient   String?
+  notes       String?
+  receiptUrl  String?
+  createdById String?
+  createdAt   DateTime @default(now())
+}
+
+model Event {
+  id          String              @id @default(uuid())
+  title       String
+  category    String              @default("KEJUARAAN") // SEMINAR, KEJUARAAN, LATIHAN_GABUNGAN, UJIAN_SABUK, LAINNYA
+  dateStart   DateTime
+  dateEnd     DateTime?
+  location    String
+  feeAmount   Float               @default(0)
+  status      String              @default("MENDATANG") // MENDATANG, BERLANGSUNG, SELESAI, BATAL
+  description String?
+  createdAt   DateTime            @default(now())
+  
+  regs        EventRegistration[]
+}
+
+model EventRegistration {
+  id               String   @id @default(uuid())
+  eventId          String
+  event            Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  memberId         String
+  member           Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  registrationDate DateTime @default(now())
+  status           String   @default("TERDAFTAR") // TERDAFTAR, LUNAS, BATAL
+  notes            String?
+}
+
+model Inventory {
+  id        String   @id @default(uuid())
+  dojangId  String?
+  dojang    Dojang?  @relation(fields: [dojangId], references: [id], onDelete: SetNull)
+  code      String   @unique
+  name      String
+  category  String   @default("PERALATAN") // SERAGAM, PELINDUNG, MATRAS, PERALATAN
+  stock     Int      @default(0)
+  unit      String   @default("Pcs")
+  unitPrice Float    @default(0)
+  condition String   @default("BAIK") // BAIK, RUSAK_RINGAN, RUSAK_BERAT
+  location  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Certificate {
+  id            String   @id @default(uuid())
+  certificateNo String   @unique
+  type          String   @default("PESERTA") // PESERTA, UJIAN_SABUK, PELATIH
+  title         String
+  recipientName String
+  issueDate     DateTime @default(now())
+  signedBy      String?
+  pdfUrl        String?
+  memberId      String?
+  member        Member?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+}
+
+model Announcement {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  category    String   @default("UMUM") // LATIHAN, LIBUR, EVENT, UJIAN, UMUM
+  isPinned    Boolean  @default(false)
+  createdById String?
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id           String   @id @default(uuid())
+  title        String
+  message      String
+  type         String   @default("ANNOUNCEMENT") // DUE_PAYMENT, SCHEDULE, ANNOUNCEMENT, EXAM, EVENT
+  isRead       Boolean  @default(false)
+  targetUserId String?
+  createdAt    DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  userName  String?
+  userRole  String?
+  action    String   // LOGIN, LOGOUT, CREATE, UPDATE, DELETE
+  entity    String   // ANGGOTA, PELATIH, PEMBAYARAN, ABSENSI, DOJANG, etc.
+  entityId  String?
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model DojangSetting {
+  id                 String   @id @default("DEFAULT")
+  dojangName         String   @default("DOJANG HAPKIDO INDONESIA")
+  logoUrl            String?
+  address            String   @default("Jl. Utama Perguruan Hapkido No. 1, Jakarta")
+  phone              String   @default("0812-3456-7890")
+  email              String   @default("info@dojanghapkido.id")
+  academicPeriod     String   @default("2026/2027")
+  defaultMonthlyFee  Float    @default(150000)
+  defaultPracticeDays String  @default("Selasa, Kamis, Sabtu")
+  headerText         String   @default("PENGURUS PERGURUAN BELADIRI HAPKIDO")
+  footerReceiptText  String   @default("Terima kasih telah melakukan pembayaran tepat waktu. Salam Hapkido!")
+  updatedAt          DateTime @updatedAt
+}
