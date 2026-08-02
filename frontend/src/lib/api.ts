@@ -1,4 +1,8 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || (
+  typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+    ? 'https://hapkido-backend.vercel.app/api'
+    : 'http://localhost:5000/api'
+)).replace(/\/+$/, '');
 
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -35,7 +39,9 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     (headers as any)['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${endpoint}`, {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+  const res = await fetch(`${API_BASE}${cleanEndpoint}`, {
     ...options,
     headers,
   });
