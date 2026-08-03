@@ -190,12 +190,14 @@ export default function DashboardPage() {
                       📍 {sch.location} &bull; Pelatih: {sch.trainer?.user?.name || 'Sabeum'}
                     </p>
                   </div>
-                  <div className="text-right sm:border-l sm:pl-4 border-slate-200">
-                    <p className="text-xs font-bold text-hapkido-red">
-                      {new Date(sch.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' })}
+                  <div className="text-right sm:border-l sm:pl-4 border-slate-200 shrink-0">
+                    <p className="text-xs font-extrabold text-hapkido-red uppercase">
+                      {sch.date && !isNaN(new Date(sch.date).getTime())
+                        ? new Date(sch.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' })
+                        : `Hari ${sch.dayOfWeek || 'Latihan'}`}
                     </p>
-                    <p className="text-[11px] font-semibold text-slate-500">
-                      {sch.class?.startTime || '16.00'} - {sch.class?.endTime || '18.00'} WIB
+                    <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                      {sch.startTime || sch.class?.startTime || '16:00'} - {sch.endTime || sch.class?.endTime || '18:00'} WIB
                     </p>
                   </div>
                 </div>
