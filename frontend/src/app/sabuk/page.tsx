@@ -220,17 +220,23 @@ export default function SabukPage() {
             <h2 className="font-extrabold text-slate-800 text-base">Hirarki Sabuk Hapkido ({beltLevels.length})</h2>
           </div>
 
-          <div className="space-y-3">
-            {beltLevels.map((b) => (
-              <div key={b.id} className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-1.5 hover:bg-slate-100/60 transition">
-                <div className="flex items-center justify-between gap-2">
-                  <span
-                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold shadow-2xs leading-tight"
-                    style={{ backgroundColor: b.badgeColor || '#e2e8f0', color: b.geupRank === 0 ? '#ffffff' : '#0f172a' }}
-                  >
-                    <Award className="w-3.5 h-3.5 shrink-0" />
-                    {b.name}
-                  </span>
+            {beltLevels.map((b) => {
+              const isDarkBadge =
+                b.geupRank <= 0 ||
+                ['#0F172A', '#991B1B', '#78350F', '#000000', '#1E293B'].includes((b.badgeColor || '').toUpperCase());
+              return (
+                <div key={b.id} className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-1.5 hover:bg-slate-100/60 transition">
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold shadow-2xs leading-tight"
+                      style={{
+                        backgroundColor: b.badgeColor || '#e2e8f0',
+                        color: isDarkBadge ? '#ffffff' : '#0f172a',
+                      }}
+                    >
+                      <Award className="w-3.5 h-3.5 shrink-0" />
+                      {b.name}
+                    </span>
 
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="text-[10px] font-extrabold text-slate-500">
