@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { apiFetch } from '@/lib/api';
-import { Award, Plus, Calendar, CheckCircle, X, Trash2 } from 'lucide-react';
+import { useConfirm, useLoading } from '@/context/UiContext';
+import { Award, Plus, Calendar, CheckCircle, X, Trash2, Pencil } from 'lucide-react';
 
 export default function SabukPage() {
+  const confirm = useConfirm();
+  const { showLoading, hideLoading } = useLoading();
   const [beltLevels, setBeltLevels] = useState<any[]>([]);
   const [exams, setExams] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
@@ -12,6 +15,7 @@ export default function SabukPage() {
 
   // Modals state
   const [showAddBeltModal, setShowAddBeltModal] = useState(false);
+  const [editingBeltId, setEditingBeltId] = useState<string | null>(null);
   const [showAddExamModal, setShowAddExamModal] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
 
@@ -62,15 +66,48 @@ export default function SabukPage() {
     loadData();
   }, []);
 
+  const handleOpenAddBelt = () => {
+    setEditingBeltId(null);
+    setBeltForm({
+      name: '',
+      geupRank: 8,
+      badgeColor: '#22C55E',
+      examFeeDefault: 150000,
+      requirements: '',
+      description: '',
+    });
+    setShowAddBeltModal(true);
+  };
+
+  const handleOpenEditBelt = (b: any) => {
+    setEditingBeltId(b.id);
+    setBeltForm({
+      name: b.name || '',
+      geupRank: b.geupRank ?? 8,
+      badgeColor: b.badgeColor || '#22C55E',
+      examFeeDefault: b.examFeeDefault || 150000,
+      requirements: b.requirements || '',
+      description: b.description || '',
+    });
+    setShowAddBeltModal(true);
+  };
+
   const handleSaveBelt = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await apiFetch('/belts', {
-      method: 'POST',
+    showLoading(editingBeltId ? 'Memperbarui tingkatan sabuk...' : 'Menyimpan tingkatan sabuk...');
+
+    const endpoint = editingBeltId ? `/belts/${editingBeltId}` : '/belts';
+    const method = editingBeltId ? 'PUT' : 'POST';
+
+    const res = await apiFetch(endpoint, {
+      method,
       body: JSON.stringify(beltForm),
     });
+    hideLoading();
 
     if (res.success) {
       setShowAddBeltModal(false);
+      setEditingBeltId(null);
       setBeltForm({
         name: '',
         geupRank: 8,
@@ -81,24 +118,39 @@ export default function SabukPage() {
       });
       loadData();
     } else {
-      alert(res.message || 'Gagal menambahkan tingkatan sabuk.');
+      alert(res.message || 'Gagal menyimpan tingkatan sabuk.');
     }
   };
 
   const handleDeleteBelt = async (id: string, name: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus tingkatan ${name}?`)) {
+    const ok = await confirm({
+      title: 'Hapus Tingkatan Sabuk',
+      message: `Apakah Anda yakin ingin menghapus tingkatan ${name}?`,
+      confirmText: 'Ya, Hapus Sabuk',
+      cancelText: 'Batal',
+      variant: 'danger',
+    });
+
+    if (ok) {
+      showLoading('Menghapus tingkatan sabuk...');
       const res = await apiFetch(`/belts/${id}`, { method: 'DELETE' });
-      if (res.success) loadData();
-      else alert(res.message || 'Gagal menghapus tingkatan sabuk.');
+      hideLoading();
+      if (res.success) {
+        loadData();
+      } else {
+        alert(res.message || 'Gagal menghapus tingkatan sabuk.');
+      }
     }
   };
 
   const handleSaveExam = async (e: React.FormEvent) => {
     e.preventDefault();
+    showLoading('Menyimpan jadwal ujian sabuk...');
     const res = await apiFetch('/belts/exams', {
       method: 'POST',
       body: JSON.stringify(examForm),
     });
+    hideLoading();
 
     if (res.success) {
       setShowAddExamModal(false);
@@ -110,6 +162,7 @@ export default function SabukPage() {
 
   const handleSubmitResult = async (e: React.FormEvent) => {
     e.preventDefault();
+    showLoading('Menyimpan hasil ujian sabuk...');
     const res = await apiFetch('/belts/results', {
       method: 'POST',
       body: JSON.stringify({
@@ -117,6 +170,7 @@ export default function SabukPage() {
         ...resultForm,
       }),
     });
+    hideLoading();
 
     if (res.success) {
       setShowResultModal(false);
@@ -136,13 +190,13 @@ export default function SabukPage() {
             Tingkatan Sabuk & Ujian Kenaikan
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Kurikulum tingkatan Geup hingga Dan, penambahan tingkat sabuk oleh Admin, pendaftaran ujian & sertifikat.
+            Kurikulum tingkatan Geup hingga Dan, kelola & edit tingkatan sabuk oleh Admin, pendaftaran ujian & sertifikat.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowAddBeltModal(true)}
+            onClick={handleOpenAddBelt}
             className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4 text-hapkido-red" />
@@ -169,19 +223,26 @@ export default function SabukPage() {
           <div className="space-y-3">
             {beltLevels.map((b) => (
               <div key={b.id} className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-1.5 hover:bg-slate-100/60 transition">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <span
-                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold shadow-2xs leading-tight"
                     style={{ backgroundColor: b.badgeColor || '#e2e8f0', color: b.geupRank === 0 ? '#ffffff' : '#0f172a' }}
                   >
-                    <Award className="w-3.5 h-3.5" />
+                    <Award className="w-3.5 h-3.5 shrink-0" />
                     {b.name}
                   </span>
 
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-extrabold text-slate-400">
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] font-extrabold text-slate-500">
                       Rp {(b.examFeeDefault || 0).toLocaleString('id-ID')}
                     </span>
+                    <button
+                      onClick={() => handleOpenEditBelt(b)}
+                      title="Edit Sabuk"
+                      className="p-1 text-slate-500 hover:text-hapkido-navy hover:bg-slate-200 rounded transition"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
                     <button
                       onClick={() => handleDeleteBelt(b.id, b.name)}
                       title="Hapus Sabuk"
@@ -191,7 +252,7 @@ export default function SabukPage() {
                     </button>
                   </div>
                 </div>
-                {b.requirements && <p className="text-[11px] text-slate-600 font-medium">{b.requirements}</p>}
+                {b.requirements && <p className="text-[11px] text-slate-600 font-medium leading-relaxed">{b.requirements}</p>}
               </div>
             ))}
           </div>
@@ -278,12 +339,14 @@ export default function SabukPage() {
         </div>
       </div>
 
-      {/* Modal Add Belt Level */}
+      {/* Modal Add / Edit Belt Level */}
       {showAddBeltModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-extrabold text-slate-800 text-sm">Tambah Tingkatan Sabuk Baru</h3>
+              <h3 className="font-extrabold text-slate-800 text-sm">
+                {editingBeltId ? 'Edit Tingkatan Sabuk' : 'Tambah Tingkatan Sabuk Baru'}
+              </h3>
               <button onClick={() => setShowAddBeltModal(false)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-lg">
                 <X className="w-5 h-5" />
               </button>
@@ -345,7 +408,7 @@ export default function SabukPage() {
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Syarat Teknik & Kurikulum</label>
                 <textarea
-                  rows={2}
+                  rows={3}
                   value={beltForm.requirements}
                   onChange={(e) => setBeltForm({ ...beltForm, requirements: e.target.value })}
                   placeholder="Misal: Teknik Nakbop Samping, Hoshinsool 1-5, Hyung Dan 1"
@@ -362,7 +425,7 @@ export default function SabukPage() {
                   Batal
                 </button>
                 <button type="submit" className="px-4 py-2 bg-hapkido-navy text-white rounded-xl font-bold shadow-md">
-                  Simpan Tingkatan Sabuk
+                  {editingBeltId ? 'Perbarui Sabuk' : 'Simpan Tingkatan Sabuk'}
                 </button>
               </div>
             </form>

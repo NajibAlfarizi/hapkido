@@ -78,6 +78,45 @@ export async function deleteBeltLevel(req: AuthRequest, res: Response) {
   }
 }
 
+export async function updateBeltLevel(req: AuthRequest, res: Response) {
+  try {
+    const { id } = req.params;
+    const { name, geupRank, badgeColor, examFeeDefault, requirements, description } = req.body;
+
+    const existing = await prisma.beltLevel.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Tingkatan sabuk tidak ditemukan.' });
+    }
+
+    const updated = await prisma.beltLevel.update({
+      where: { id },
+      data: {
+        name: name !== undefined ? name : existing.name,
+        geupRank: geupRank !== undefined ? Number(geupRank) : existing.geupRank,
+        badgeColor: badgeColor !== undefined ? badgeColor : existing.badgeColor,
+        examFeeDefault: examFeeDefault !== undefined ? Number(examFeeDefault) : existing.examFeeDefault,
+        requirements: requirements !== undefined ? requirements : existing.requirements,
+        description: description !== undefined ? description : existing.description,
+      },
+    });
+
+    await createAuditLog({
+      userId: req.user?.id,
+      userName: req.user?.name,
+      userRole: req.user?.role,
+      action: 'UPDATE',
+      entity: 'TINGKATAN_SABUK',
+      entityId: id,
+      details: `Memperbarui tingkatan sabuk ${updated.name}`,
+      ipAddress: req.ip,
+    });
+
+    return res.json({ success: true, message: 'Tingkatan sabuk berhasil diperbarui.', data: updated });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
 export async function getBeltExams(req: AuthRequest, res: Response) {
   try {
     const exams = await prisma.beltExam.findMany({
