@@ -1,18 +1,30 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
+import jsQR from 'jsqr';
 import {
   QrCode,
   Camera,
   UserCheck,
-  Clock,
   CheckCircle,
   AlertCircle,
   Play,
   StopCircle,
   CameraOff,
+  Sparkles,
+  Volume2,
 } from 'lucide-react';
+
+interface ScanNotification {
+  type: 'success' | 'error' | 'duplicate' | 'processing';
+  title: string;
+  msg: string;
+  memberName?: string;
+  nia?: string;
+  status?: string;
+  checkInTime?: string;
+}
 
 export default function AbsensiPage() {
   const [schedules, setSchedules] = useState<any[]>([]);
@@ -25,7 +37,8 @@ export default function AbsensiPage() {
 
   // Scanner state
   const [scannerActive, setScannerActive] = useState(false);
-  const [scanResultMsg, setScanResultMsg] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [scanNotification, setScanNotification] = useState<ScanNotification | null>(null);
+  
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -40,6 +53,46 @@ export default function AbsensiPage() {
       stopCameraScanner();
     };
   }, []);
+
+  const playBeep = (type: 'success' | 'error' | 'duplicate') => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'success') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+        osc.frequency.setValueAtTime(1320, ctx.currentTime + 0.1); // E6
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.25);
+      } else if (type === 'duplicate') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(520, ctx.currentTime);
+        osc.frequency.setValueAtTime(440, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.3);
+      } else {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(320, ctx.currentTime);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.35);
+      }
+    } catch (e) {
+      // Audio context fallback ignore
+    }
+  };
 
   const loadSchedulesAndMembers = async () => {
     setLoading(true);
@@ -78,10 +131,10 @@ export default function AbsensiPage() {
     }
   };
 
-  // ====== Native Camera QR Scanner using jsQR ======
+  // ====== High-Performance Native Camera QR Scanner ======
   const startCameraScanner = async () => {
     setScannerActive(true);
-    setScanResultMsg(null);
+    setScanNotification(null);
     lastScannedRef.current = '';
 
     try {
@@ -90,14 +143,12 @@ export default function AbsensiPage() {
       });
       streamRef.current = stream;
 
-      // Wait for video element to be rendered
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.setAttribute('playsinline', 'true');
           videoRef.current.play();
 
-          // Start scanning after video is playing
           videoRef.current.onloadedmetadata = () => {
             scanLoop();
           };
@@ -105,7 +156,11 @@ export default function AbsensiPage() {
       }, 100);
     } catch (err: any) {
       console.error('Camera error:', err);
-      setScanResultMsg({ type: 'error', msg: 'Gagal mengakses kamera. Pastikan izin kamera sudah diberikan.' });
+      setScanNotification({
+        type: 'error',
+        title: 'Kamera Gagal',
+        msg: 'Gagal mengakses kamera. Pastikan izin kamera sudah diberikan.',
+      });
       setScannerActive(false);
     }
   };
@@ -113,7 +168,7 @@ export default function AbsensiPage() {
   const scanLoop = () => {
     if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
 
-    scanIntervalRef.current = setInterval(async () => {
+    scanIntervalRef.current = setInterval(() => {
       if (!videoRef.current || !canvasRef.current) return;
 
       const video = videoRef.current;
@@ -129,8 +184,7 @@ export default function AbsensiPage() {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      // Dynamically import jsQR
-      const jsQR = (await import('jsqr')).default;
+      // Fast synchronous jsQR scan
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: 'dontInvert',
       });
@@ -139,12 +193,12 @@ export default function AbsensiPage() {
         lastScannedRef.current = code.data;
         handleScanSuccess(code.data);
 
-        // Reset after 3 seconds to allow next scan
+        // Reset after 3.5 seconds to allow next scan
         setTimeout(() => {
           lastScannedRef.current = '';
-        }, 3000);
+        }, 3500);
       }
-    }, 250); // Scan every 250ms
+    }, 180); // Fast scan loop (every 180ms)
   };
 
   const stopCameraScanner = () => {
@@ -164,9 +218,20 @@ export default function AbsensiPage() {
 
   const handleScanSuccess = async (qrData: string) => {
     if (!currentSession) {
-      setScanResultMsg({ type: 'error', msg: 'Buka sesi absensi terlebih dahulu.' });
+      setScanNotification({
+        type: 'error',
+        title: 'Sesi Belum Dibuka',
+        msg: 'Buka sesi absensi terlebih dahulu.',
+      });
       return;
     }
+
+    // Instant Feedback while request is sent
+    setScanNotification({
+      type: 'processing',
+      title: 'Memproses Presensi...',
+      msg: `Mendeteksi QR Code (${qrData.substring(0, 16)}...)`,
+    });
 
     const res = await apiFetch('/attendance/scan', {
       method: 'POST',
@@ -179,10 +244,30 @@ export default function AbsensiPage() {
     });
 
     if (res.success) {
-      setScanResultMsg({ type: 'success', msg: res.message });
+      playBeep('success');
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]);
+      }
+
+      setScanNotification({
+        type: 'success',
+        title: 'PRESENSI BERHASIL DETEKSI! 🟢',
+        msg: res.message,
+        memberName: res.data?.member?.fullName || 'Anggota Dojang',
+        nia: res.data?.member?.nia,
+        status: res.data?.status || attendanceStatus,
+        checkInTime: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      });
       loadSessionDetail(currentSession.id);
     } else {
-      setScanResultMsg({ type: 'error', msg: res.message });
+      const isDup = res.message?.toLowerCase().includes('sudah');
+      playBeep(isDup ? 'duplicate' : 'error');
+
+      setScanNotification({
+        type: isDup ? 'duplicate' : 'error',
+        title: isDup ? 'ANGGOTA SUDAH PRESENSI ⚠️' : 'GAGAL PRESENSI ❌',
+        msg: res.message || 'Presensi gagal diproses.',
+      });
     }
   };
 
@@ -204,11 +289,25 @@ export default function AbsensiPage() {
     });
 
     if (res.success) {
-      setScanResultMsg({ type: 'success', msg: res.message });
+      playBeep('success');
+      setScanNotification({
+        type: 'success',
+        title: 'PRESENSI MANUAL BERHASIL! 🟢',
+        msg: res.message,
+        memberName: res.data?.member?.fullName,
+        nia: res.data?.member?.nia,
+        status: res.data?.status || attendanceStatus,
+        checkInTime: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      });
       setSelectedMemberId('');
       loadSessionDetail(currentSession.id);
     } else {
-      setScanResultMsg({ type: 'error', msg: res.message });
+      playBeep('error');
+      setScanNotification({
+        type: 'error',
+        title: 'GAGAL PRESENSI ❌',
+        msg: res.message,
+      });
     }
   };
 
@@ -219,17 +318,17 @@ export default function AbsensiPage() {
         <div>
           <h1 className="text-xl font-extrabold text-slate-800 flex items-center gap-2">
             <QrCode className="w-6 h-6 text-hapkido-red" />
-            Sesi & Presensi QR Code
+            Sesi & Presensi Realtime QR Code
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Buka sesi latihan, lakukan Scan QR Kartu Anggota menggunakan kamera HP/Laptop, atau input presensi manual.
+            Buka sesi latihan, lakukan Scan QR Kartu Anggota menggunakan kamera HP/Laptop dengan audio & notifikasi instant.
           </p>
         </div>
 
         {currentSession && (
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-extrabold flex items-center gap-1">
-              <CheckCircle className="w-4 h-4 text-emerald-600" /> Sesi AKTIF Terbuka
+            <span className="px-3.5 py-1.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-extrabold flex items-center gap-1.5 shadow-xs">
+              <CheckCircle className="w-4 h-4 text-emerald-600 animate-pulse" /> Sesi AKTIF Terbuka
             </span>
           </div>
         )}
@@ -281,27 +380,47 @@ export default function AbsensiPage() {
               <p className="text-xs text-slate-500 mt-0.5">📍 {currentSession.schedule?.location} &bull; {currentSession.schedule?.dayOfWeek} {currentSession.schedule?.startTime}-{currentSession.schedule?.endTime}</p>
             </div>
 
-            {/* Scan Status Feedback Alert */}
-            {scanResultMsg && (
+            {/* Prominent Real-time Scan Notification Overlay & Card */}
+            {scanNotification && (
               <div
-                className={`p-3.5 rounded-xl text-xs flex items-center gap-2 font-bold ${
-                  scanResultMsg.type === 'success'
-                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                    : 'bg-rose-50 text-rose-800 border border-rose-200'
+                className={`p-4 rounded-2xl border-2 shadow-lg transition-all transform animate-in zoom-in-95 duration-200 space-y-2 ${
+                  scanNotification.type === 'success'
+                    ? 'bg-emerald-500 text-white border-emerald-400 shadow-emerald-200'
+                    : scanNotification.type === 'duplicate'
+                    ? 'bg-amber-500 text-white border-amber-400 shadow-amber-200'
+                    : scanNotification.type === 'processing'
+                    ? 'bg-blue-600 text-white border-blue-400 animate-pulse'
+                    : 'bg-rose-600 text-white border-rose-400 shadow-rose-200'
                 }`}
               >
-                {scanResultMsg.type === 'success' ? (
-                  <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-black uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <Volume2 className="w-3 h-3" /> {scanNotification.title}
+                  </span>
+                  {scanNotification.checkInTime && (
+                    <span className="text-[10px] font-mono font-bold bg-black/20 px-2 py-0.5 rounded">
+                      ⏰ {scanNotification.checkInTime}
+                    </span>
+                  )}
+                </div>
+
+                {scanNotification.memberName ? (
+                  <div className="pt-1 space-y-1">
+                    <h3 className="text-lg font-black tracking-tight leading-tight">{scanNotification.memberName}</h3>
+                    <div className="flex items-center gap-2 text-xs font-semibold">
+                      <span className="bg-white/30 px-2 py-0.5 rounded font-mono font-bold">{scanNotification.nia}</span>
+                      <span className="bg-black/20 px-2 py-0.5 rounded font-extrabold uppercase">{scanNotification.status}</span>
+                    </div>
+                  </div>
                 ) : (
-                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                  <p className="text-xs font-semibold leading-relaxed pt-1">{scanNotification.msg}</p>
                 )}
-                <span>{scanResultMsg.msg}</span>
               </div>
             )}
 
             {/* Attendance Status Selector */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700">Status Presensi:</label>
+              <label className="block text-xs font-bold text-slate-700">Set Status Presensi Scan:</label>
               <div className="grid grid-cols-3 gap-1.5">
                 {['HADIR', 'TERLAMBAT', 'IZIN', 'SAKIT', 'ALPHA'].map((st) => (
                   <button
@@ -325,14 +444,14 @@ export default function AbsensiPage() {
               {!scannerActive ? (
                 <button
                   onClick={startCameraScanner}
-                  className="w-full py-3 bg-hapkido-red hover:bg-rose-600 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-hapkido-red hover:bg-rose-600 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center gap-2 active:scale-95"
                 >
                   <Camera className="w-4 h-4" />
                   <span>Aktifkan Kamera Scan QR</span>
                 </button>
               ) : (
                 <div className="space-y-2">
-                  <div className="relative w-full overflow-hidden rounded-2xl border-2 border-hapkido-red bg-black aspect-[4/3]">
+                  <div className="relative w-full overflow-hidden rounded-3xl border-4 border-hapkido-navy bg-slate-950 aspect-[4/3] shadow-inner">
                     <video
                       ref={videoRef}
                       className="w-full h-full object-cover"
@@ -340,20 +459,23 @@ export default function AbsensiPage() {
                       muted
                       autoPlay
                     />
-                    {/* Scan overlay guide */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-48 h-48 border-2 border-white/60 rounded-2xl" />
-                    </div>
-                    <div className="absolute bottom-2 left-0 right-0 text-center">
-                      <span className="bg-black/60 text-white text-[10px] font-bold px-3 py-1 rounded-full">
-                        📷 Arahkan QR Code ke kamera
+                    {/* Scan Overlay Aim Box */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-4">
+                      <div className="w-44 h-44 border-4 border-emerald-400 rounded-3xl relative animate-pulse shadow-[0_0_20px_rgba(52,211,153,0.5)]">
+                        <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-white -mt-1 -ml-1 rounded-tl" />
+                        <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-white -mt-1 -mr-1 rounded-tr" />
+                        <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-white -mb-1 -ml-1 rounded-bl" />
+                        <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-white -mb-1 -mr-1 rounded-br" />
+                      </div>
+                      <span className="mt-3 bg-slate-900/80 backdrop-blur-md text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md">
+                        📷 Pasang Kartu QR di dalam kotak
                       </span>
                     </div>
                   </div>
                   <canvas ref={canvasRef} className="hidden" />
                   <button
                     onClick={stopCameraScanner}
-                    className="w-full py-2 bg-slate-200 text-slate-700 font-bold rounded-xl text-xs hover:bg-slate-300 transition flex items-center justify-center gap-2"
+                    className="w-full py-2.5 bg-slate-200 text-slate-700 font-bold rounded-xl text-xs hover:bg-slate-300 transition flex items-center justify-center gap-2"
                   >
                     <CameraOff className="w-3.5 h-3.5" />
                     Matikan Kamera

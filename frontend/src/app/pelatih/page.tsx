@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { apiFetch } from '@/lib/api';
-import { UserCheck, Plus, X, Phone, Mail, Award, CheckCircle } from 'lucide-react';
+import { useConfirm, useLoading } from '@/context/UiContext';
+import { UserCheck, Plus, X, Phone, Mail, Award, CheckCircle, Trash2 } from 'lucide-react';
 
 export default function PelatihPage() {
+  const confirm = useConfirm();
+  const { showLoading, hideLoading } = useLoading();
   const [trainers, setTrainers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -33,10 +36,12 @@ export default function PelatihPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    showLoading('Menyimpan akun pelatih...');
     const res = await apiFetch('/trainers', {
       method: 'POST',
       body: JSON.stringify(form),
     });
+    hideLoading();
 
     if (res.success) {
       setShowAddModal(false);
@@ -44,6 +49,27 @@ export default function PelatihPage() {
       loadTrainers();
     } else {
       alert(res.message || 'Gagal merilis akun pelatih.');
+    }
+  };
+
+  const handleDeleteTrainer = async (id: string, name: string) => {
+    const ok = await confirm({
+      title: 'Hapus Akun Pelatih',
+      message: `Apakah Anda yakin ingin menghapus pelatih ${name}? Akun login pelatih ini akan dihapus dari sistem.`,
+      confirmText: 'Ya, Hapus Pelatih',
+      cancelText: 'Batal',
+      variant: 'danger',
+    });
+
+    if (ok) {
+      showLoading('Menghapus data pelatih...');
+      const res = await apiFetch(`/trainers/${id}`, { method: 'DELETE' });
+      hideLoading();
+      if (res.success) {
+        loadTrainers();
+      } else {
+        alert(res.message || 'Gagal menghapus pelatih.');
+      }
     }
   };
 
@@ -76,16 +102,26 @@ export default function PelatihPage() {
         ) : trainers.length > 0 ? (
           trainers.map((t) => (
             <div key={t.id} className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs hover:shadow-md transition space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-hapkido-navy to-slate-700 text-white flex items-center justify-center font-extrabold text-sm shadow-md">
-                  {t.user?.name?.substring(0, 2).toUpperCase()}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-hapkido-navy to-slate-700 text-white flex items-center justify-center font-extrabold text-sm shadow-md">
+                    {t.user?.name?.substring(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-800 text-base">{t.user?.name}</h3>
+                    <span className="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 font-bold text-[10px] rounded">
+                      {t.isHead ? 'Kepala Pelatih (Head Sabum)' : 'Pelatih Instruktur'}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-extrabold text-slate-800 text-base">{t.user?.name}</h3>
-                  <span className="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 font-bold text-[10px] rounded">
-                    {t.isHead ? 'Kepala Pelatih (Head Sabum)' : 'Pelatih Instruktur'}
-                  </span>
-                </div>
+
+                <button
+                  onClick={() => handleDeleteTrainer(t.id, t.user?.name || 'Pelatih')}
+                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
+                  title="Hapus Pelatih"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
 
               <div className="space-y-2 text-xs border-t border-slate-100 pt-3">

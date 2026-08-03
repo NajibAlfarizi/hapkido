@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import LayoutShell from '@/components/layout/LayoutShell';
+import { UiProvider } from '@/context/UiContext';
+import PageTransitionLoader from '@/components/ui/PageTransitionLoader';
 
 export const metadata: Metadata = {
   title: 'Sistem Informasi Dojang Hapkido',
@@ -28,7 +30,10 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className="antialiased selection:bg-hapkido-red selection:text-white">
-        <LayoutShell>{children}</LayoutShell>
+        <UiProvider>
+          <PageTransitionLoader />
+          <LayoutShell>{children}</LayoutShell>
+        </UiProvider>
 
         <script
           dangerouslySetInnerHTML={{

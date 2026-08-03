@@ -10,7 +10,9 @@ export interface AuthRequest extends Request {
   };
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'hapkido_dojang_secret_key_2026_super_secure';
+function getJwtSecret() {
+  return process.env.JWT_SECRET || 'hapkido_dojang_secret_key_2026_super_secure';
+}
 
 export function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers['authorization'];
@@ -21,7 +23,7 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
     req.user = decoded;
     next();
   } catch (err) {

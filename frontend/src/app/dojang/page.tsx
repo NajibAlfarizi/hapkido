@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { apiFetch } from '@/lib/api';
+import { useConfirm, useLoading } from '@/context/UiContext';
 import { Shield, Plus, X, MapPin, Phone, Mail, Users, Calendar, Clock, Trash2 } from 'lucide-react';
 
 export default function DojangPage() {
+  const confirm = useConfirm();
+  const { showLoading, hideLoading } = useLoading();
   const [dojangs, setDojangs] = useState<any[]>([]);
   const [schedules, setSchedules] = useState<any[]>([]);
   const [trainers, setTrainers] = useState<any[]>([]);
@@ -53,10 +56,12 @@ export default function DojangPage() {
 
   const handleSaveDojang = async (e: React.FormEvent) => {
     e.preventDefault();
+    showLoading('Menyimpan cabang dojang baru...');
     const res = await apiFetch('/dojangs', {
       method: 'POST',
       body: JSON.stringify(dojangForm),
     });
+    hideLoading();
 
     if (res.success) {
       setShowAddDojangModal(false);
@@ -69,10 +74,12 @@ export default function DojangPage() {
 
   const handleSaveSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
+    showLoading('Menyimpan jadwal latihan...');
     const res = await apiFetch('/schedules', {
       method: 'POST',
       body: JSON.stringify(scheduleForm),
     });
+    hideLoading();
 
     if (res.success) {
       setShowAddScheduleModal(false);
@@ -91,15 +98,35 @@ export default function DojangPage() {
   };
 
   const handleDeleteDojang = async (id: string, name: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus cabang ${name}?`)) {
+    const ok = await confirm({
+      title: 'Hapus Cabang Dojang',
+      message: `Apakah Anda yakin ingin menghapus cabang ${name}? Data anggota terkait cabang ini mungkin akan terpengaruh.`,
+      confirmText: 'Ya, Hapus Cabang',
+      cancelText: 'Batal',
+      variant: 'danger',
+    });
+
+    if (ok) {
+      showLoading('Menghapus cabang dojang...');
       const res = await apiFetch(`/dojangs/${id}`, { method: 'DELETE' });
+      hideLoading();
       if (res.success) loadData();
     }
   };
 
   const handleDeleteSchedule = async (id: string, title: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus jadwal ${title}?`)) {
+    const ok = await confirm({
+      title: 'Hapus Jadwal Latihan',
+      message: `Apakah Anda yakin ingin menghapus jadwal "${title}"?`,
+      confirmText: 'Ya, Hapus Jadwal',
+      cancelText: 'Batal',
+      variant: 'danger',
+    });
+
+    if (ok) {
+      showLoading('Menghapus jadwal...');
       const res = await apiFetch(`/schedules/${id}`, { method: 'DELETE' });
+      hideLoading();
       if (res.success) loadData();
     }
   };
@@ -299,13 +326,18 @@ export default function DojangPage() {
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Kepala Pelatih / Penanggung Jawab</label>
-                <input
-                  type="text"
+                <select
                   value={dojangForm.headTrainerName}
                   onChange={(e) => setDojangForm({ ...dojangForm, headTrainerName: e.target.value })}
-                  placeholder="Nama Sabum Nim"
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold"
-                />
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800"
+                >
+                  <option value="">-- Pilih Pelatih Terdaftar --</option>
+                  {trainers.map((t) => (
+                    <option key={t.id} value={t.user?.name || ''}>
+                      {t.user?.name} {t.isHead ? '⭐ (Head Sabum)' : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
@@ -379,6 +411,22 @@ export default function DojangPage() {
                   {dojangs.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.name} ({d.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Pelatih Instruktur (Penanggung Jawab)</label>
+                <select
+                  value={scheduleForm.trainerId}
+                  onChange={(e) => setScheduleForm({ ...scheduleForm, trainerId: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800"
+                >
+                  <option value="">-- Pilih Pelatih Instruktur --</option>
+                  {trainers.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.user?.name} {t.isHead ? '⭐ (Head Sabum)' : ''}
                     </option>
                   ))}
                 </select>

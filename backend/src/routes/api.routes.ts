@@ -48,6 +48,7 @@ router.delete('/members/:id', authorizeRoles('ADMIN'), memberCtrl.deleteMember);
 router.get('/trainers', trainerCtrl.getTrainers);
 router.post('/trainers', authorizeRoles('ADMIN'), trainerCtrl.createTrainer);
 router.put('/trainers/:id', authorizeRoles('ADMIN'), trainerCtrl.updateTrainer);
+router.delete('/trainers/:id', authorizeRoles('ADMIN'), trainerCtrl.deleteTrainer);
 
 // Belt Levels & Exams
 router.get('/belts', beltCtrl.getBeltLevels);

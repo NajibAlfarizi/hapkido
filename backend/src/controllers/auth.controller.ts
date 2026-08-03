@@ -5,7 +5,9 @@ import { prisma } from '../db';
 import { AuthRequest } from '../middlewares/authMiddleware';
 import { createAuditLog } from '../utils/auditLogger';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'hapkido_dojang_secret_key_2026_super_secure';
+function getJwtSecret() {
+  return process.env.JWT_SECRET || 'hapkido_dojang_secret_key_2026_super_secure';
+}
 
 export async function login(req: AuthRequest, res: Response) {
   try {
@@ -35,7 +37,7 @@ export async function login(req: AuthRequest, res: Response) {
         name: user.name,
         role: user.role,
       },
-      JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: '7d' }
     );
 

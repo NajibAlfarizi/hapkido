@@ -135,3 +135,55 @@ export async function updateTrainer(req: AuthRequest, res: Response) {
     return res.status(500).json({ success: false, message: error.message });
   }
 }
+
+export async function deleteTrainer(req: AuthRequest, res: Response) {
+  try {
+    const { id } = req.params;
+
+    const trainer = await prisma.trainer.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+
+    if (!trainer) {
+      return res.status(404).json({ success: false, message: 'Pelatih tidak ditemukan.' });
+    }
+
+    const trainerName = trainer.user?.name || 'Pelatih';
+
+    // Clear relations in schedules and classes
+    await prisma.trainingSchedule.updateMany({
+      where: { trainerId: id },
+      data: { trainerId: null },
+    });
+
+    await prisma.trainingClass.updateMany({
+      where: { trainerId: id },
+      data: { trainerId: null },
+    });
+
+    // Delete trainer record
+    await prisma.trainer.delete({ where: { id } });
+    
+    // Delete associated user account if present
+    if (trainer.userId) {
+      await prisma.user.delete({ where: { id: trainer.userId } }).catch(() => {});
+    }
+
+    await createAuditLog({
+      userId: req.user?.id,
+      userName: req.user?.name,
+      userRole: req.user?.role,
+      action: 'DELETE',
+      entity: 'PELATIH',
+      entityId: id,
+      details: `Menghapus pelatih ${trainerName}`,
+      ipAddress: req.ip,
+    });
+
+    return res.json({ success: true, message: 'Pelatih berhasil dihapus.' });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
