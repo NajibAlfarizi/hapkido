@@ -219,7 +219,7 @@ export default function SabukPage() {
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h2 className="font-extrabold text-slate-800 text-base">Hirarki Sabuk Hapkido ({beltLevels.length})</h2>
           </div>
-
+          <div className="space-y-3">
             {beltLevels.map((b) => {
               const isDarkBadge =
                 b.geupRank <= 0 ||
@@ -260,7 +260,8 @@ export default function SabukPage() {
                 </div>
                 {b.requirements && <p className="text-[11px] text-slate-600 font-medium leading-relaxed">{b.requirements}</p>}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
