@@ -3,6 +3,7 @@ import './globals.css';
 import LayoutShell from '@/components/layout/LayoutShell';
 import { UiProvider } from '@/context/UiContext';
 import PageTransitionLoader from '@/components/ui/PageTransitionLoader';
+import PwaInstallPrompt from '@/components/ui/PwaInstallPrompt';
 
 export const metadata: Metadata = {
   title: 'Sistem Informasi Dojang Hapkido',
@@ -32,6 +33,7 @@ export default function RootLayout({
       <body className="antialiased selection:bg-hapkido-red selection:text-white">
         <UiProvider>
           <PageTransitionLoader />
+          <PwaInstallPrompt />
           <LayoutShell>{children}</LayoutShell>
         </UiProvider>
 
