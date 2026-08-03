@@ -7,7 +7,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const prisma = new PrismaClient();
 
 async function seedBelts() {
-  console.log('🥋 Seeding official Hapkido belt levels into Neon PostgreSQL database...');
+  console.log('🥋 Seeding official Hapkido Geup & DAN belt levels into Neon PostgreSQL database...');
 
   const beltLevels = [
     {
@@ -80,12 +80,42 @@ async function seedBelts() {
       examFeeDefault: 350000,
       requirements: 'Sabuk Merah Strip Hitam - Persiapan Dan 1, kombinasi 3 tendangan udara, Sparring (pertarungan bebas).',
     },
+
+    // ===== JENJANG TINGKATAN DAN (SABUK HITAM) =====
     {
-      name: 'Sabuk Hitam (Dan 1)',
+      name: 'Sabuk Hitam - Il Dan (Dan 1)',
       geupRank: 0,
       badgeColor: '#0F172A', // Hitam
       examFeeDefault: 500000,
-      requirements: 'Sabuk Hitam (Dan 1) - Hyung (Kata) Dan 1, filosofi Hapkido, Hoshinsool komprehensif & kepemimpinan Dojang.',
+      requirements: 'Il Dan (Dan 1): Tingkat pemula sabuk hitam, fokus pada pemantapan teknik dasar dan lanjutan.',
+    },
+    {
+      name: 'Sabuk Hitam - Ee Dan (Dan 2)',
+      geupRank: -1,
+      badgeColor: '#0F172A', // Hitam
+      examFeeDefault: 650000,
+      requirements: 'Ee Dan (Dan 2): Tingkat pemula sabuk hitam, fokus pada pemantapan teknik dasar dan lanjutan.',
+    },
+    {
+      name: 'Sabuk Hitam - Sam Dan (Dan 3)',
+      geupRank: -2,
+      badgeColor: '#0F172A', // Hitam
+      examFeeDefault: 850000,
+      requirements: 'Sam Dan (Dan 3): Tingkat menengah, di mana pemegang sabuk mulai diakui sebagai instruktur atau pelatih (Sasaeng/Kwanjang).',
+    },
+    {
+      name: 'Sabuk Hitam - Sa Dan (Dan 4)',
+      geupRank: -3,
+      badgeColor: '#0F172A', // Hitam
+      examFeeDefault: 1000000,
+      requirements: 'Sa Dan (Dan 4): Tingkat menengah, di mana pemegang sabuk mulai diakui sebagai instruktur atau pelatih (Sasaeng/Kwanjang).',
+    },
+    {
+      name: 'Sabuk Hitam - O Dan Ke Atas / Grandmaster (Dan 5+)',
+      geupRank: -4,
+      badgeColor: '#0F172A', // Hitam
+      examFeeDefault: 1500000,
+      requirements: 'O Dan (Dan 5) ke atas: Tingkat mahir, tingkat tinggi, hingga Grandmaster (Dan 9/10) yang dipegang oleh tokoh sesepuh organisasi.',
     },
   ];
 
@@ -108,7 +138,7 @@ async function seedBelts() {
     }
   }
 
-  console.log('✅ All Hapkido belt levels successfully synced with Neon PostgreSQL DB!');
+  console.log('✅ All Hapkido Geup & DAN belt levels successfully synced with Neon PostgreSQL DB!');
 }
 
 seedBelts()

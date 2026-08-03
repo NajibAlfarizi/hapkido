@@ -83,7 +83,11 @@ async function main() {
     { name: 'Sabuk Cokelat (Geup 3)', geupRank: 3, badgeColor: '#78350F', examFeeDefault: 275000, requirements: 'Sabuk Cokelat - Tangkapan serangkaian kuncian (Sambeop), takedown & bantingan dasar.' },
     { name: 'Sabuk Merah (Geup 2)', geupRank: 2, badgeColor: '#EF4444', examFeeDefault: 300000, requirements: 'Sabuk Merah - Tangkapan pisau/senjata tajam, Hoshinsool tingkat lanjut.' },
     { name: 'Sabuk Merah Strip Hitam (Geup 1)', geupRank: 1, badgeColor: '#991B1B', examFeeDefault: 350000, requirements: 'Sabuk Merah Strip Hitam - Persiapan Dan 1, kombinasi 3 tendangan udara, Sparring (pertarungan bebas).' },
-    { name: 'Sabuk Hitam (Dan 1)', geupRank: 0, badgeColor: '#0F172A', examFeeDefault: 500000, requirements: 'Sabuk Hitam (Dan 1) - Hyung (Kata) Dan 1, filosofi Hapkido, Hoshinsool komprehensif & kepemimpinan Dojang.' },
+    { name: 'Sabuk Hitam - Il Dan (Dan 1)', geupRank: 0, badgeColor: '#0F172A', examFeeDefault: 500000, requirements: 'Il Dan (Dan 1): Tingkat pemula sabuk hitam, fokus pada pemantapan teknik dasar dan lanjutan.' },
+    { name: 'Sabuk Hitam - Ee Dan (Dan 2)', geupRank: -1, badgeColor: '#0F172A', examFeeDefault: 650000, requirements: 'Ee Dan (Dan 2): Tingkat pemula sabuk hitam, fokus pada pemantapan teknik dasar dan lanjutan.' },
+    { name: 'Sabuk Hitam - Sam Dan (Dan 3)', geupRank: -2, badgeColor: '#0F172A', examFeeDefault: 850000, requirements: 'Sam Dan (Dan 3): Tingkat menengah, di mana pemegang sabuk mulai diakui sebagai instruktur atau pelatih (Sasaeng/Kwanjang).' },
+    { name: 'Sabuk Hitam - Sa Dan (Dan 4)', geupRank: -3, badgeColor: '#0F172A', examFeeDefault: 1000000, requirements: 'Sa Dan (Dan 4): Tingkat menengah, di mana pemegang sabuk mulai diakui sebagai instruktur atau pelatih (Sasaeng/Kwanjang).' },
+    { name: 'Sabuk Hitam - O Dan Ke Atas / Grandmaster (Dan 5+)', geupRank: -4, badgeColor: '#0F172A', examFeeDefault: 1500000, requirements: 'O Dan (Dan 5) ke atas: Tingkat mahir, tingkat tinggi, hingga Grandmaster (Dan 9/10) yang dipegang oleh tokoh sesepuh organisasi.' },
   ];
 
   for (const b of beltLevels) {
