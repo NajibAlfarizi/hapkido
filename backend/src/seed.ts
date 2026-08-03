@@ -73,19 +73,33 @@ async function main() {
 
   // 3. Seed Default Belt Levels
   const beltLevels = [
-    { name: 'Sabuk Putih (Geup 10)', geupRank: 10, badgeColor: '#E2E8F0', examFeeDefault: 100000, requirements: 'Teknik dasar kuda-kuda, pukulan (Jireugi), tendangan depan (Ap Chagi).' },
-    { name: 'Sabuk Kuning (Geup 9)', geupRank: 9, badgeColor: '#FACC15', examFeeDefault: 125000, requirements: 'Jatuhan (Nakbop), Kuncian pergelangan tangan (Hoshinsool 1-5).' },
-    { name: 'Sabuk Hijau (Geup 8)', geupRank: 8, badgeColor: '#22C55E', examFeeDefault: 150000, requirements: 'Tendangan memutar (Dollyo Chagi), Hoshinsool kemeja/pakaian 1-5.' },
-    { name: 'Sabuk Biru (Geup 7)', geupRank: 7, badgeColor: '#3B82F6', examFeeDefault: 175000, requirements: 'Kuncian tangkapan (Sambeop), tendangan samping (Yop Chagi).' },
-    { name: 'Sabuk Merah (Geup 6)', geupRank: 6, badgeColor: '#EF4444', examFeeDefault: 200000, requirements: 'Tendangan belakang (Dwit Chagi), tangkapan pisau/senjata tajam.' },
-    { name: 'Sabuk Merah Strip (Geup 5)', geupRank: 5, badgeColor: '#B91C1C', examFeeDefault: 225000, requirements: 'Kombinasi 3 tendangan udara, Hoshinsool tingkat lanjut.' },
-    { name: 'Sabuk Hitam (Dan 1)', geupRank: 0, badgeColor: '#0F172A', examFeeDefault: 500000, requirements: 'Hyung (Kata) Dan 1, aplikasi beladiri praktis, ujian fisik & mental.' },
+    { name: 'Sabuk Putih (Geup 10)', geupRank: 10, badgeColor: '#E2E8F0', examFeeDefault: 100000, requirements: 'Sabuk Putih (Pemula) - Teknik dasar kuda-kuda (Juchum Seogi), pukulan (Jireugi), & tendangan depan (Ap Chagi).' },
+    { name: 'Sabuk Kuning (Geup 9)', geupRank: 9, badgeColor: '#FACC15', examFeeDefault: 125000, requirements: 'Sabuk Kuning - Teknik jatuhan (Nakbop) & Kuncian pergelangan tangan (Hoshinsool 1-5).' },
+    { name: 'Sabuk Oranye / Kuning Strip (Geup 8)', geupRank: 8, badgeColor: '#F97316', examFeeDefault: 150000, requirements: 'Sabuk Oranye / Kuning Strip - Tendangan memutar (Dollyo Chagi), Hoshinsool tangkapan pakaian.' },
+    { name: 'Sabuk Hijau (Geup 7)', geupRank: 7, badgeColor: '#22C55E', examFeeDefault: 175000, requirements: 'Sabuk Hijau - Tendangan samping (Yop Chagi), tangkapan dua tangan & kuncian siku.' },
+    { name: 'Sabuk Hijau Strip / Ungu (Geup 6)', geupRank: 6, badgeColor: '#A855F7', examFeeDefault: 200000, requirements: 'Sabuk Hijau Strip / Ungu - Kuncian pergelangan silang, pelepasan cekikan dari belakang.' },
+    { name: 'Sabuk Biru (Geup 5)', geupRank: 5, badgeColor: '#3B82F6', examFeeDefault: 225000, requirements: 'Sabuk Biru - Tendangan belakang (Dwit Chagi), Hoshinsool tangkapan bahu & leher.' },
+    { name: 'Sabuk Biru Strip / Cokelat Muda (Geup 4)', geupRank: 4, badgeColor: '#D97706', examFeeDefault: 250000, requirements: 'Sabuk Biru Strip / Cokelat Muda - Kombinasi tendangan melompat (Twimyo Chagi), bantingan Hapkido.' },
+    { name: 'Sabuk Cokelat (Geup 3)', geupRank: 3, badgeColor: '#78350F', examFeeDefault: 275000, requirements: 'Sabuk Cokelat - Tangkapan serangkaian kuncian (Sambeop), takedown & bantingan dasar.' },
+    { name: 'Sabuk Merah (Geup 2)', geupRank: 2, badgeColor: '#EF4444', examFeeDefault: 300000, requirements: 'Sabuk Merah - Tangkapan pisau/senjata tajam, Hoshinsool tingkat lanjut.' },
+    { name: 'Sabuk Merah Strip Hitam (Geup 1)', geupRank: 1, badgeColor: '#991B1B', examFeeDefault: 350000, requirements: 'Sabuk Merah Strip Hitam - Persiapan Dan 1, kombinasi 3 tendangan udara, Sparring (pertarungan bebas).' },
+    { name: 'Sabuk Hitam (Dan 1)', geupRank: 0, badgeColor: '#0F172A', examFeeDefault: 500000, requirements: 'Sabuk Hitam (Dan 1) - Hyung (Kata) Dan 1, filosofi Hapkido, Hoshinsool komprehensif & kepemimpinan Dojang.' },
   ];
 
   for (const b of beltLevels) {
     const existing = await prisma.beltLevel.findFirst({ where: { geupRank: b.geupRank } });
     if (!existing) {
       await prisma.beltLevel.create({ data: b });
+    } else {
+      await prisma.beltLevel.update({
+        where: { id: existing.id },
+        data: {
+          name: b.name,
+          badgeColor: b.badgeColor,
+          examFeeDefault: b.examFeeDefault,
+          requirements: b.requirements,
+        },
+      });
     }
   }
 
