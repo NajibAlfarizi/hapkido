@@ -378,12 +378,55 @@ export default function OrangTuaDashboard() {
           )}
 
           {activeTab === 'jadwal' && (
-            <div className="space-y-4">
-              <h3 className="font-extrabold text-slate-800 text-sm">Informasi Dojang & Hari Latihan</h3>
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
-                <p className="font-bold text-slate-800">Cabang Dojang: {currentChild.dojang?.name || 'Dojang Pusat'}</p>
-                <p className="text-slate-600">Alamat: {currentChild.dojang?.address || 'Jl. Perguruan Hapkido No. 1'}</p>
-                <p className="text-slate-600">Pelatih Kepala: {currentChild.dojang?.headTrainerName || 'Master Sabeum Nim'}</p>
+            <div className="space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="font-extrabold text-slate-800 text-sm">Jadwal Latihan Rutin ({currentChild.fullName})</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Cabang Dojang: <span className="font-bold text-slate-700">{currentChild.dojang?.name || 'Dojang Pusat'}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Dojang Branch Info */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1.5 text-xs">
+                <p className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <Building className="w-4 h-4 text-hapkido-navy" />
+                  <span>{currentChild.dojang?.name || 'Dojang Pusat'}</span>
+                </p>
+                <p className="text-slate-600 pl-5">📍 {currentChild.dojang?.address || 'Alamat cabang belum diatur'}</p>
+                <p className="text-slate-600 pl-5">👤 Pelatih Kepala: <span className="font-semibold">{currentChild.dojang?.headTrainerName || 'Master Sabeum'}</span></p>
+              </div>
+
+              {/* Schedule List */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-slate-700 text-xs uppercase tracking-wider">Hari & Jam Latihan Rutin Mingguan:</h4>
+                {currentChild.dojang?.schedules && currentChild.dojang.schedules.length > 0 ? (
+                  currentChild.dojang.schedules.map((s: any) => (
+                    <div key={s.id} className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-1 bg-hapkido-navy text-white font-extrabold text-[11px] rounded-lg uppercase">
+                            HARI {s.dayOfWeek}
+                          </span>
+                          <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-extrabold text-[10px] rounded-full">
+                            AKTIF
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-extrabold text-slate-800 mt-1">{s.title}</h4>
+                        <p className="text-xs text-slate-600 flex items-center gap-3">
+                          <span className="font-semibold text-hapkido-red">⏰ {s.startTime || '16:00'} - {s.endTime || '18:00'} WIB</span>
+                          <span>📍 {s.location}</span>
+                        </p>
+                        {s.notes && <p className="text-[11px] text-slate-500">Materi: {s.notes}</p>}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-6 bg-slate-50 rounded-2xl text-center text-slate-400 text-xs">
+                    Belum ada jadwal latihan rutin terdaftar untuk cabang dojang ini.
+                  </div>
+                )}
               </div>
             </div>
           )}

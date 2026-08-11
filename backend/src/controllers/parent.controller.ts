@@ -15,7 +15,14 @@ export async function getMyChildren(req: AuthRequest, res: Response) {
       include: {
         member: {
           include: {
-            dojang: true,
+            dojang: {
+              include: {
+                schedules: {
+                  where: { status: 'AKTIF' },
+                  orderBy: { createdAt: 'desc' },
+                },
+              },
+            },
             beltHistory: {
               include: { beltLevel: true },
               orderBy: { examDate: 'desc' },
