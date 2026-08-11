@@ -40,6 +40,11 @@ export default function LoginPage() {
     }
   };
 
+  const fillDemo = (u: string, p: string) => {
+    setUsername(u);
+    setPassword(p);
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4 sm:p-6 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden">
