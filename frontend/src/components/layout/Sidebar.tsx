@@ -36,7 +36,7 @@ export default function Sidebar({ userRole = 'ADMIN' }: SidebarProps) {
     { name: 'Pelatih Dojang', href: '/pelatih', icon: UserCheck, roles: ['ADMIN'] },
     { name: 'Kelola Orang Tua', href: '/admin/orangtua', icon: Users, roles: ['ADMIN'] },
     { name: 'Absensi (Scan QR)', href: '/absensi', icon: QrCode, roles: ['ADMIN', 'PELATIH'] },
-    { name: 'Jadwal & Dojang', href: '/dojang', icon: Calendar, roles: ['ADMIN', 'PELATIH', 'ORANG_TUA'] },
+    { name: 'Jadwal & Dojang', href: '/dojang', icon: Calendar, roles: ['ADMIN', 'PELATIH'] },
     { name: 'Tingkatan Sabuk', href: '/sabuk', icon: Award, roles: ['ADMIN', 'PELATIH'] },
     { name: 'Iuran & Bayar', href: '/pembayaran', icon: CreditCard, roles: ['ADMIN'] },
     { name: 'Pengeluaran', href: '/pengeluaran', icon: TrendingDown, roles: ['ADMIN'] },

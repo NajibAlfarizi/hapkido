@@ -33,7 +33,7 @@ export default function LayoutShell({ children }: LayoutShellProps) {
 
     // RBAC Route Guard & Auto-Redirect
     if (currUser.role === 'ORANG_TUA') {
-      const parentAllowed = ['/orangtua', '/dojang', '/pengumuman', '/event'];
+      const parentAllowed = ['/orangtua', '/pengumuman', '/event'];
       if (pathname === '/' || pathname === '/dashboard' || !parentAllowed.some((r) => pathname.startsWith(r))) {
         router.push('/orangtua');
       }
@@ -60,7 +60,7 @@ export default function LayoutShell({ children }: LayoutShellProps) {
     { name: 'Pelatih Dojang', href: '/pelatih', icon: UserCheck, roles: ['ADMIN'] },
     { name: 'Kelola Orang Tua', href: '/admin/orangtua', icon: Users, roles: ['ADMIN'] },
     { name: 'Absensi (Scan QR)', href: '/absensi', icon: QrCode, roles: ['ADMIN', 'PELATIH'] },
-    { name: 'Jadwal & Dojang', href: '/dojang', icon: Calendar, roles: ['ADMIN', 'PELATIH', 'ORANG_TUA'] },
+    { name: 'Jadwal & Dojang', href: '/dojang', icon: Calendar, roles: ['ADMIN', 'PELATIH'] },
     { name: 'Tingkatan Sabuk', href: '/sabuk', icon: Award, roles: ['ADMIN', 'PELATIH'] },
     { name: 'Iuran & Pembayaran', href: '/pembayaran', icon: CreditCard, roles: ['ADMIN'] },
     { name: 'Pengeluaran', href: '/pengeluaran', icon: TrendingDown, roles: ['ADMIN'] },

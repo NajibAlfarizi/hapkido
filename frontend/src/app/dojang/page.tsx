@@ -5,10 +5,12 @@ import { apiFetch, getCurrentUser } from '@/lib/api';
 import { useConfirm, useLoading } from '@/context/UiContext';
 import { Shield, Plus, X, MapPin, Phone, Mail, Users, Calendar, Clock, Trash2 } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+
 export default function DojangPage() {
+  const router = useRouter();
   const confirm = useConfirm();
   const { showLoading, hideLoading } = useLoading();
-  const [userRole, setUserRole] = useState('ADMIN');
   const [dojangs, setDojangs] = useState<any[]>([]);
   const [schedules, setSchedules] = useState<any[]>([]);
   const [trainers, setTrainers] = useState<any[]>([]);
@@ -17,10 +19,10 @@ export default function DojangPage() {
 
   useEffect(() => {
     const user = getCurrentUser();
-    if (user?.role) setUserRole(user.role);
-  }, []);
-
-  const isParent = userRole === 'ORANG_TUA';
+    if (user?.role === 'ORANG_TUA') {
+      router.push('/orangtua');
+    }
+  }, [router]);
 
   const [showAddDojangModal, setShowAddDojangModal] = useState(false);
   const [showAddScheduleModal, setShowAddScheduleModal] = useState(false);
