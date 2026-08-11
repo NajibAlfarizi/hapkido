@@ -17,11 +17,13 @@ import * as reportCtrl from '../controllers/report.controller';
 import * as settingCtrl from '../controllers/setting.controller';
 import * as auditCtrl from '../controllers/audit.controller';
 import * as dojangCtrl from '../controllers/dojang.controller';
+import * as parentCtrl from '../controllers/parent.controller';
 
 const router = Router();
 
 // Public routes
 router.post('/auth/login', authCtrl.login);
+router.post('/auth/register-parent', authCtrl.registerParent);
 
 // Protected routes (Admin & Pelatih)
 router.use(authenticateToken);
@@ -113,5 +115,14 @@ router.put('/settings', authorizeRoles('ADMIN'), settingCtrl.updateDojangSetting
 
 // Audit Logs
 router.get('/audit-logs', authorizeRoles('ADMIN'), auditCtrl.getAuditLogs);
+
+// Parent Role Routes
+router.get('/parent/children', authorizeRoles('ORANG_TUA'), parentCtrl.getMyChildren);
+router.post('/parent/payment-proof', authorizeRoles('ORANG_TUA'), parentCtrl.submitPaymentProof);
+
+// Admin Parent Management Routes
+router.get('/admin/parent-accounts', authorizeRoles('ADMIN'), parentCtrl.getParentAccounts);
+router.put('/admin/parent-accounts/:parentId', authorizeRoles('ADMIN'), parentCtrl.approveParentAccount);
+router.delete('/admin/parent-accounts/:parentId', authorizeRoles('ADMIN'), parentCtrl.deleteParentAccount);
 
 export default router;

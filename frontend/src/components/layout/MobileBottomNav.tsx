@@ -13,9 +13,9 @@ export default function MobileBottomNav({ userRole = 'ADMIN', onOpenMoreMenu }: 
   const pathname = usePathname();
 
   const navs = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Dashboard', href: userRole === 'ORANG_TUA' ? '/orangtua' : '/dashboard', icon: LayoutDashboard },
     { name: 'Anggota', href: '/anggota', icon: Users, roles: ['ADMIN'] },
-    { name: 'Absensi QR', href: '/absensi', icon: QrCode },
+    { name: 'Absensi QR', href: '/absensi', icon: QrCode, roles: ['ADMIN', 'PELATIH'] },
     { name: 'Pembayaran', href: '/pembayaran', icon: CreditCard, roles: ['ADMIN'] },
   ];
 

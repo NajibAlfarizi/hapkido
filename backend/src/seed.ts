@@ -156,6 +156,25 @@ async function main() {
     },
   });
 
+  // Demo Parent User
+  const parentPassword = await bcrypt.hash('orangtua123', 10);
+  const parentUser = await prisma.user.upsert({
+    where: { username: 'orangtua' },
+    update: {
+      passwordHash: parentPassword,
+      status: 'AKTIF',
+    },
+    create: {
+      username: 'orangtua',
+      passwordHash: parentPassword,
+      name: 'Bapak Ahmad Pratama (Orang Tua)',
+      role: 'ORANG_TUA',
+      status: 'AKTIF',
+      email: 'ahmad@gmail.com',
+      phone: '081377889900',
+    },
+  });
+
   // 5. Seed Dues Types
   const duesTypes = [
     { name: 'Iuran Bulanan Anggota', category: 'BULANAN', defaultAmount: 150000, description: 'Iuran latihan bulanan reguler' },
@@ -283,6 +302,19 @@ async function main() {
     if (!existing) {
       await prisma.trainingSchedule.create({ data: s });
     }
+  }
+
+  // Link demo parent to first member
+  const firstMember = await prisma.member.findFirst();
+  if (firstMember && parentUser) {
+    await prisma.parentChild.upsert({
+      where: { parentId_memberId: { parentId: parentUser.id, memberId: firstMember.id } },
+      update: {},
+      create: {
+        parentId: parentUser.id,
+        memberId: firstMember.id,
+      },
+    });
   }
 
   console.log('✅ Multi-dojang seeding completed successfully!');

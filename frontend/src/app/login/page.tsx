@@ -100,6 +100,46 @@ export default function LoginPage() {
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
+
+          {/* Demo Login Quick Buttons */}
+          <div className="pt-4 border-t border-slate-100 space-y-3">
+            <div className="text-center">
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-hapkido-red hover:underline transition"
+              >
+                <span>Belum punya akun? Daftar sebagai Orang Tua</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-semibold text-slate-500 mb-2 text-center">Uji Coba Akun Demo:</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => fillDemo('hapkidopadangpanjang', 'admin123')}
+                  className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-[11px] font-semibold text-slate-700 transition text-center"
+                >
+                  🔑 Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fillDemo('pelatih', 'pelatih123')}
+                  className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-[11px] font-semibold text-slate-700 transition text-center"
+                >
+                  🥋 Pelatih
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fillDemo('orangtua', 'orangtua123')}
+                  className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-[11px] font-semibold text-slate-700 transition text-center"
+                >
+                  👨‍👩‍👧 Orang Tua
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
