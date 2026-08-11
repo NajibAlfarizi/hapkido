@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { apiFetch, setAuthToken, getCurrentUser } from '@/lib/api';
 import { Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
 
