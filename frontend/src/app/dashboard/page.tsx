@@ -18,13 +18,21 @@ import {
   TrendingUp
 } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+
 export default function DashboardPage() {
+  const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const curr = getCurrentUser();
+    if (curr?.role === 'ORANG_TUA') {
+      router.push('/orangtua');
+      return;
+    }
+
     setUser(curr);
 
     apiFetch('/reports/dashboard').then((res) => {
@@ -33,7 +41,7 @@ export default function DashboardPage() {
       }
       setLoading(false);
     });
-  }, []);
+  }, [router]);
 
   if (loading) {
     return (

@@ -1,18 +1,26 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, getCurrentUser } from '@/lib/api';
 import { useConfirm, useLoading } from '@/context/UiContext';
 import { Shield, Plus, X, MapPin, Phone, Mail, Users, Calendar, Clock, Trash2 } from 'lucide-react';
 
 export default function DojangPage() {
   const confirm = useConfirm();
   const { showLoading, hideLoading } = useLoading();
+  const [userRole, setUserRole] = useState('ADMIN');
   const [dojangs, setDojangs] = useState<any[]>([]);
   const [schedules, setSchedules] = useState<any[]>([]);
   const [trainers, setTrainers] = useState<any[]>([]);
   const [selectedDojangId, setSelectedDojangId] = useState('');
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (user?.role) setUserRole(user.role);
+  }, []);
+
+  const isParent = userRole === 'ORANG_TUA';
 
   const [showAddDojangModal, setShowAddDojangModal] = useState(false);
   const [showAddScheduleModal, setShowAddScheduleModal] = useState(false);
@@ -145,22 +153,24 @@ export default function DojangPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowAddDojangModal(true)}
-            className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
-          >
-            <Plus className="w-4 h-4 text-hapkido-red" />
-            <span>Tambah Cabang Dojang</span>
-          </button>
-          <button
-            onClick={() => setShowAddScheduleModal(true)}
-            className="px-4 py-2.5 bg-hapkido-navy hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center gap-1.5"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Atur Hari Latihan</span>
-          </button>
-        </div>
+        {!isParent && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowAddDojangModal(true)}
+              className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+            >
+              <Plus className="w-4 h-4 text-hapkido-red" />
+              <span>Tambah Cabang Dojang</span>
+            </button>
+            <button
+              onClick={() => setShowAddScheduleModal(true)}
+              className="px-4 py-2.5 bg-hapkido-navy hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center gap-1.5"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Atur Hari Latihan</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Dojang Cards Grid */}
@@ -186,17 +196,19 @@ export default function DojangPage() {
                 >
                   {d.code}
                 </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteDojang(d.id, d.name);
-                  }}
-                  className={`p-1.5 rounded-lg transition ${
-                    selectedDojangId === d.id ? 'text-white/70 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'
-                  }`}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {!isParent && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteDojang(d.id, d.name);
+                    }}
+                    className={`p-1.5 rounded-lg transition ${
+                      selectedDojangId === d.id ? 'text-white/70 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
               <div>
@@ -271,13 +283,15 @@ export default function DojangPage() {
                   <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-extrabold text-xs rounded-full">
                     {s.status}
                   </span>
-                  <button
-                    onClick={() => handleDeleteSchedule(s.id, s.title)}
-                    className="p-1.5 text-rose-500 hover:bg-rose-100 rounded-lg transition"
-                    title="Hapus Jadwal Latihan"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {!isParent && (
+                    <button
+                      onClick={() => handleDeleteSchedule(s.id, s.title)}
+                      className="p-1.5 text-rose-500 hover:bg-rose-100 rounded-lg transition"
+                      title="Hapus Jadwal Latihan"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))

@@ -20,18 +20,36 @@ export default function LayoutShell({ children }: LayoutShellProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // If on login page, skip layout shell
-    if (pathname === '/login') return;
+    // Skip layout shell for public pages
+    if (pathname === '/login' || pathname === '/register') return;
 
     const currUser = getCurrentUser();
     if (!currUser) {
       router.push('/login');
-    } else {
-      setUser(currUser);
+      return;
+    }
+
+    setUser(currUser);
+
+    // RBAC Route Guard & Auto-Redirect
+    if (currUser.role === 'ORANG_TUA') {
+      const parentAllowed = ['/orangtua', '/dojang', '/pengumuman', '/event'];
+      if (pathname === '/' || pathname === '/dashboard' || !parentAllowed.some((r) => pathname.startsWith(r))) {
+        router.push('/orangtua');
+      }
+    } else if (currUser.role === 'PELATIH') {
+      const pelatihAllowed = ['/dashboard', '/absensi', '/dojang', '/sabuk', '/pengumuman', '/event'];
+      if (pathname === '/' || pathname === '/orangtua' || !pelatihAllowed.some((r) => pathname.startsWith(r))) {
+        router.push('/dashboard');
+      }
+    } else if (currUser.role === 'ADMIN') {
+      if (pathname === '/' || pathname === '/orangtua') {
+        router.push('/dashboard');
+      }
     }
   }, [pathname, router]);
 
-  if (pathname === '/login') {
+  if (pathname === '/login' || pathname === '/register') {
     return <>{children}</>;
   }
 

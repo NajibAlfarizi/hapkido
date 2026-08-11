@@ -16,7 +16,7 @@ export default function LoginPage() {
   useEffect(() => {
     const user = getCurrentUser();
     if (user) {
-      router.push('/dashboard');
+      router.push(user.role === 'ORANG_TUA' ? '/orangtua' : '/dashboard');
     }
   }, [router]);
 
@@ -33,7 +33,8 @@ export default function LoginPage() {
     if (res.success && res.data) {
       setAuthToken(res.data.token);
       localStorage.setItem('hapkido_user', JSON.stringify(res.data.user));
-      window.location.href = '/dashboard';
+      const targetPath = res.data.user?.role === 'ORANG_TUA' ? '/orangtua' : '/dashboard';
+      window.location.href = targetPath;
     } else {
       setLoading(false);
       setError(res.message || 'Login gagal. Periksa username dan password Anda.');
