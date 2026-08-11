@@ -47,11 +47,14 @@ export default function AdminOrangTuaPage() {
     setLoading(false);
   };
 
+  const [memberSearch, setMemberSearch] = useState('');
+
   const handleOpenManageModal = (parent: any) => {
     setSelectedParent(parent);
     setTargetStatus(parent.status);
     const linkedIds = parent.children ? parent.children.map((c: any) => c.member?.id).filter(Boolean) : [];
     setSelectedMemberIds(linkedIds);
+    setMemberSearch('');
     setShowManageModal(true);
   };
 
@@ -114,6 +117,11 @@ export default function AdminOrangTuaPage() {
   });
 
   const pendingCount = parentAccounts.filter((p) => p.status === 'PENDING').length;
+
+  const filteredModalMembers = members.filter((m) =>
+    m.fullName?.toLowerCase().includes(memberSearch.toLowerCase()) ||
+    m.nia?.toLowerCase().includes(memberSearch.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -298,33 +306,67 @@ export default function AdminOrangTuaPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="block font-bold text-slate-700">Hubungkan ke Anggota (Anak):</label>
+                <div className="flex items-center justify-between">
+                  <label className="block font-bold text-slate-700">Hubungkan ke Anggota (Anak):</label>
+                  {selectedMemberIds.length > 0 && (
+                    <span className="text-[10px] font-extrabold text-hapkido-navy bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+                      {selectedMemberIds.length} Anak Dipilih
+                    </span>
+                  )}
+                </div>
                 <p className="text-[11px] text-slate-500">Pilih anggota yang merupakan anak dari orang tua ini:</p>
 
+                {/* Search Input for Child Name / NIA */}
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                    placeholder="🔍 Cari nama anak / Nomor Induk Anggota (NIA)..."
+                    className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-xs focus:bg-white focus:ring-2 focus:ring-hapkido-navy transition"
+                  />
+                  {memberSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setMemberSearch('')}
+                      className="absolute right-2.5 top-2 text-[10px] font-bold text-slate-400 hover:text-slate-600 bg-slate-200 hover:bg-slate-300 px-1.5 py-0.5 rounded"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
                 <div className="max-h-56 overflow-y-auto border border-slate-200 rounded-2xl p-2 space-y-1.5 bg-slate-50">
-                  {members.map((m) => {
-                    const isSelected = selectedMemberIds.includes(m.id);
-                    return (
-                      <label
-                        key={m.id}
-                        onClick={() => handleToggleMemberSelect(m.id)}
-                        className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition border ${
-                          isSelected ? 'bg-hapkido-navy/10 border-hapkido-navy font-bold text-hapkido-navy' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => {}}
-                            className="rounded border-slate-300 text-hapkido-navy focus:ring-hapkido-navy"
-                          />
-                          <span>{m.fullName}</span>
-                        </div>
-                        <span className="font-mono text-[10px] text-slate-400">{m.nia}</span>
-                      </label>
-                    );
-                  })}
+                  {filteredModalMembers.length > 0 ? (
+                    filteredModalMembers.map((m) => {
+                      const isSelected = selectedMemberIds.includes(m.id);
+                      return (
+                        <label
+                          key={m.id}
+                          onClick={() => handleToggleMemberSelect(m.id)}
+                          className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition border ${
+                            isSelected ? 'bg-hapkido-navy/10 border-hapkido-navy font-bold text-hapkido-navy shadow-2xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => {}}
+                              className="rounded border-slate-300 text-hapkido-navy focus:ring-hapkido-navy"
+                            />
+                            <span>{m.fullName}</span>
+                          </div>
+                          <span className="font-mono text-[10px] text-slate-400">{m.nia}</span>
+                        </label>
+                      );
+                    })
+                  ) : (
+                    <div className="p-6 text-center text-slate-400 text-xs">
+                      Anak dengan nama / NIA "{memberSearch}" tidak ditemukan.
+                    </div>
+                  )}
                 </div>
               </div>
 
