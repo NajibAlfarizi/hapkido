@@ -118,10 +118,30 @@ export default function AdminOrangTuaPage() {
 
   const pendingCount = parentAccounts.filter((p) => p.status === 'PENDING').length;
 
-  const filteredModalMembers = members.filter((m) =>
-    m.fullName?.toLowerCase().includes(memberSearch.toLowerCase()) ||
-    m.nia?.toLowerCase().includes(memberSearch.toLowerCase())
-  );
+  // Collect map of memberId -> parentName for all OTHER parent accounts
+  const memberToOtherParentMap = new Map<string, string>();
+  parentAccounts.forEach((p) => {
+    if (selectedParent && p.id === selectedParent.id) return; // Skip currently selected parent
+    if (p.children && Array.isArray(p.children)) {
+      p.children.forEach((c: any) => {
+        if (c.member?.id) {
+          memberToOtherParentMap.set(c.member.id, p.name);
+        }
+      });
+    }
+  });
+
+  // Filter members for modal: exclude members already linked to ANOTHER parent
+  const filteredModalMembers = members.filter((m) => {
+    const isLinkedToOtherParent = memberToOtherParentMap.has(m.id);
+    if (isLinkedToOtherParent) return false;
+
+    const matchSearch =
+      m.fullName?.toLowerCase().includes(memberSearch.toLowerCase()) ||
+      m.nia?.toLowerCase().includes(memberSearch.toLowerCase());
+
+    return matchSearch;
+  });
 
   return (
     <div className="space-y-6">
@@ -314,7 +334,7 @@ export default function AdminOrangTuaPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-500">Pilih anggota yang merupakan anak dari orang tua ini:</p>
+                <p className="text-[11px] text-slate-500">Pilih anggota anak (hanya menampilkan anggota yang belum terhubung ke orang tua lain):</p>
 
                 {/* Search Input for Child Name / NIA */}
                 <div className="relative">
