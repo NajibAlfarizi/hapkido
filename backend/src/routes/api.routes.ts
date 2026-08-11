@@ -18,6 +18,7 @@ import * as settingCtrl from '../controllers/setting.controller';
 import * as auditCtrl from '../controllers/audit.controller';
 import * as dojangCtrl from '../controllers/dojang.controller';
 import * as parentCtrl from '../controllers/parent.controller';
+import notificationRouter from './notification.routes';
 
 const router = Router();
 
@@ -119,6 +120,9 @@ router.get('/audit-logs', authorizeRoles('ADMIN'), auditCtrl.getAuditLogs);
 // Parent Role Routes
 router.get('/parent/children', authorizeRoles('ORANG_TUA'), parentCtrl.getMyChildren);
 router.post('/parent/payment-proof', authorizeRoles('ORANG_TUA'), parentCtrl.submitPaymentProof);
+
+// Notifications
+router.use('/notifications', notificationRouter);
 
 // Admin Parent Management Routes
 router.get('/admin/parent-accounts', authorizeRoles('ADMIN'), parentCtrl.getParentAccounts);

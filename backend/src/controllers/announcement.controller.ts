@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { prisma } from '../db';
 import { AuthRequest } from '../middlewares/authMiddleware';
 
+import { createAndSendNotification } from '../services/notificationService';
+
 export async function getAnnouncements(req: AuthRequest, res: Response) {
   try {
     const announcements = await prisma.announcement.findMany({
@@ -28,6 +30,14 @@ export async function createAnnouncement(req: AuthRequest, res: Response) {
         isPinned: Boolean(isPinned),
         createdById: req.user?.id,
       },
+    });
+
+    // Broadcast real-time notification to all users
+    await createAndSendNotification({
+      title: `📢 Pengumuman Baru: ${title}`,
+      message: content.length > 100 ? `${content.substring(0, 100)}...` : content,
+      type: 'PENGUMUMAN',
+      linkUrl: '/pengumuman',
     });
 
     return res.status(201).json({ success: true, message: 'Pengumuman berhasil dipublikasikan.', data: announcement });

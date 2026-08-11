@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { prisma } from '../db';
 import { AuthRequest } from '../middlewares/authMiddleware';
 
+import { createAndSendNotification } from '../services/notificationService';
+
 export async function getEvents(req: AuthRequest, res: Response) {
   try {
     const events = await prisma.event.findMany({
@@ -37,6 +39,14 @@ export async function createEvent(req: AuthRequest, res: Response) {
         description,
         status: 'MENDATANG',
       },
+    });
+
+    // Broadcast real-time notification to all users
+    await createAndSendNotification({
+      title: `🏆 Event & Kejuaraan Baru: ${title}`,
+      message: `Event "${title}" akan dilaksanakan pada ${new Date(dateStart).toLocaleDateString('id-ID')} di ${location}.`,
+      type: 'EVENT',
+      linkUrl: '/event',
     });
 
     return res.status(201).json({ success: true, message: 'Event berhasil didaftarkan.', data: event });
